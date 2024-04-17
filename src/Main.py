@@ -2,6 +2,7 @@ import pygame
 import Constant
 
 pygame.init()
+
 screen = pygame.display.set_mode((Constant.SCREEN_WIDTH, Constant.SCREEN_HEIGHT))
 surfaceAlpha = pygame.Surface((Constant.SCREEN_WIDTH, Constant.SCREEN_HEIGHT),pygame.SRCALPHA)
 surfaceAlpha.set_alpha(50)
@@ -571,9 +572,11 @@ solution = None
 def mainGame():
     global finishGame, offset, solution
     for event in pygame.event.get():
+        # bắt sự kiện thoát game
         if event.type == pygame.QUIT:
             exitGame()
 
+        # bắt sự kiện click chuột trái
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             Button["Back"].checkClick(event.pos)
             Button["PlayAgain"].checkClick(event.pos)
@@ -581,15 +584,16 @@ def mainGame():
             if(Interact.notification != None):
                 Interact.notification.checkClick(event.pos)
 
+        # bắt sự kiện bàn phím
         if event.type == pygame.KEYDOWN and Interact.notification == None and not finishGame and not player.isAutoMove:
+            # xử lí di chuyển theo sự kiện bàn phím của player
             player.handleMoveKey(event.key, map)   
-            if event.key == pygame.K_f:
-                solution = Solve.findSolution(map)
-                player.isAutoMove = True
 
+    # nếu player đang di chuyển tự động thì xử lí di chuyển tự động
     if(player.isAutoMove):
         player.handleAutoMove(solution, map)
    
+    # vẽ map    
     for i in range(len(map)):
         for j in range(len(map[i])):
             pos = (i*Constant.BLOCK_SIZE + offset[0], j*Constant.BLOCK_SIZE + offset[1])
@@ -605,19 +609,20 @@ def mainGame():
             if(map[i][j] == Constant.BOXSOLVE):
                 screen.blit(Image["BoxSolve"], pos)
 
-    # if(player.pos[0]*Constant.BLOCK_SIZE + offset[0] < Constant.LIMIT_VIEW_X[0]): offset = (Constant.LIMIT_VIEW_X[0] - player.pos[0]*Constant.BLOCK_SIZE, offset[1])
-    # if(player.pos[0]*Constant.BLOCK_SIZE + offset[0] > Constant.LIMIT_VIEW_X[1]): offset = (Constant.LIMIT_VIEW_X[1] - player.pos[0]*Constant.BLOCK_SIZE, offset[1])
-    # if(player.pos[1]*Constant.BLOCK_SIZE + offset[1] < Constant.LIMIT_VIEW_Y[0]): offset = (offset[0], Constant.LIMIT_VIEW_Y[0] - player.pos[1]*Constant.BLOCK_SIZE)
-    # if(player.pos[1]*Constant.BLOCK_SIZE + offset[1] > Constant.LIMIT_VIEW_Y[1]): offset = (offset[0], Constant.LIMIT_VIEW_Y[1] - player.pos[1]*Constant.BLOCK_SIZE)
-
+    # cập nhật trạng thái của player và vẽ player
     player.update()   
     player.draw(screen, offset)
     
+    # vẽ button và hiển thị thông báo
     Button["Back"].draw(screen)
     Button["PlayAgain"].draw(screen)
     Button["Auto"].draw(screen)
+
+    # hiển thị số bước di chuyển
     moveCount = pygame.font.SysFont(Constant.FONT_FAMILY, 20).render("Move step: " + str(player.moveCount),True,(255, 255, 255))
     screen.blit(moveCount, ((Constant.SCREEN_WIDTH - moveCount.get_width())/2, 10))
+
+    # kiểm tra xem game đã kết thúc chưa
     if(not finishGame and checkWin(map)):
         finishGame = True
         Interact.createComfirm(500,200,"Congratulation","You win",(142, 205, 221),(34, 102, 141),lambda: setRunStep("game"),lambda: setIndexMap(indexMap+1) ,lambda: Interact.closeNotification(), "Play Again", "Next Map")
@@ -625,8 +630,11 @@ def mainGame():
 def mainMenu():
     global running, runStep
     for event in pygame.event.get():
+        # bắt sự kiện thoát game
         if event.type == pygame.QUIT:
             exitGame()
+        
+        # bắt sự kiện click chuột trái
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             Button["Play"].checkClick(event.pos)
             Button["Exit"].checkClick(event.pos)
@@ -634,20 +642,27 @@ def mainMenu():
             if(Interact.notification != None):
                 Interact.notification.checkClick(event.pos)
     
+    # vẽ tiêu đề game
     for x in [(3,0), (0,3), (-3,0), (0,-3)]: 
         screen.blit(titleGameBorder, ((Constant.SCREEN_WIDTH - titleGameBorder.get_width())/2 + x[0], 60 + x[1]))
     screen.blit(titleGame, ((Constant.SCREEN_WIDTH - titleGame.get_width())/2, 60))
 
+    # vẽ các nút bấm
     Button["Play"].draw(screen)
     Button["CreateMap"].draw(screen)
     Button["Exit"].draw(screen)
 
+# khởi tạo các nút bấm
 initButton()
+
 running = True
 while running:
+    # xóa màn hình
     screen.blit(Image["Background"], (0,0))
-
+    # giới hạn FPS
     pygame.time.Clock().tick(Constant.FPS)
+
+    # kiểm tra xem đang ở bước nào và hiển thị giao diện tương ứng
     if runStep == "menu":
         mainMenu()
     elif runStep == "createMap":
@@ -657,8 +672,12 @@ while running:
     elif runStep == "game":
         mainGame()
 
+    # hiển thị thông báo nếu có
     if(Interact.notification != None):
         Interact.notification.draw(screen)
 
+    # cập nhật màn hình
     pygame.display.update()
+
+# kết thúc game
 pygame.quit()
