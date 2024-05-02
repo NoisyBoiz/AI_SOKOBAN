@@ -439,6 +439,9 @@ def initGame():
                     map[i][j] = -10
                     findFloor((i,j),map)
     
+    # tìm trước các vị trí deadlock trên map 
+    Solve.initDeadlocks(map)
+
     # offset = (contain.SCREEN_WIDTH/2 - player.pos[0]*contain.BLOCK_SIZE - contain.BLOCK_SIZE/2, contain.SCREEN_HEIGHT/2 - player.pos[1]*contain.BLOCK_SIZE - contain.BLOCK_SIZE/2)
     offset = (Constant.SCREEN_WIDTH - len(map[0])*Constant.BLOCK_SIZE)//2, (Constant.SCREEN_HEIGHT - len(map)*Constant.BLOCK_SIZE)//2
         
@@ -565,7 +568,7 @@ def checkWin(map):
 
 def autoPlay():
     global solution
-    solution = Solve.findSolution(map)
+    solution = Solve.findSolution()
     player.isAutoMove = True
 
 solution = None
@@ -587,7 +590,7 @@ def mainGame():
         # bắt sự kiện bàn phím
         if event.type == pygame.KEYDOWN and Interact.notification == None and not finishGame and not player.isAutoMove:
             # xử lí di chuyển theo sự kiện bàn phím của player
-            player.handleMoveKey(event.key, map)   
+            player.handleMoveKey(event.key, map)  
 
     # nếu player đang di chuyển tự động thì xử lí di chuyển tự động
     if(player.isAutoMove):
