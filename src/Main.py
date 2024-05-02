@@ -57,7 +57,7 @@ class ToolBar:
         self.rectAction = pygame.Rect(0,0,Constant.BLOCK_SIZE*len(self.listAction),Constant.BLOCK_SIZE)
         self.listRectAction = []
         
-        self.listBlock = ["character","wall","box","checkPoint", "boxSolve"]
+        self.listBlock = ["character","wall","box","checkPoint", "boxSolve", "playerCP"]
         self.listImageBlock = []
         self.listImageBlockOrigin = []
         self.listKeyBlock = []
@@ -180,10 +180,11 @@ class ToolBar:
             x = (mousePos[0] - self.offset[0])//Constant.BLOCK_SIZE
             y = (mousePos[1] - self.offset[1])//Constant.BLOCK_SIZE
             if self.limitX[0] <= x*Constant.BLOCK_SIZE < self.limitX[1] and self.limitY[0] <= y*Constant.BLOCK_SIZE < self.limitY[1]:
-                if self.blockType == "character":
+                if self.blockType == "character" or self.blockType == "playerCP":
                     prePos = None
                     for i in self.data:
-                        if i["type"] == "character":
+                        if i["type"] == "character" or i["type"] == "playerCP":
+                            i["type"] = self.blockType
                             prePos = i["pos"]
                         if i["pos"] == (x,y):
                             return
@@ -192,7 +193,7 @@ class ToolBar:
                             if i["pos"] == prePos:
                                 i["pos"] = (x,y)
                                 return
-                    self.data.append({"type":"character","pos":(x,y)})
+                    self.data.append({"type":self.blockType,"pos":(x,y)})
                 else:
                     for i in self.data:
                         if i["pos"] == (x,y):
@@ -266,8 +267,10 @@ class ToolBar:
                     self.data.append({"type":"boxSolve","pos":(i,j)})
                 elif(map[i][j] == Constant.WALL):
                     self.data.append({"type":"wall","pos":(i,j)})
-        
-        self.offset = (Constant.SCREEN_WIDTH//2 - (len(map[0])*Constant.BLOCK_SIZE)//2, Constant.SCREEN_HEIGHT//2 - (len(map)*Constant.BLOCK_SIZE)//2)
+                elif(map[i][j] == Constant.PLAYER + Constant.CHECKPOINT):
+                    self.data.append({"type":"playerCP","pos":(i,j)})
+
+        self.offset = (Constant.SCREEN_WIDTH//2 - (len(map)*Constant.BLOCK_SIZE)//2, Constant.SCREEN_HEIGHT//2 - (len(map[0])*Constant.BLOCK_SIZE)//2)
 
     def convertData(self):
         if len(self.data) == 0:
@@ -290,6 +293,9 @@ class ToolBar:
                 CheckPointCount += 1
             elif i["type"] == "box":
                 BoxCount += 1
+            elif i["type"] == "playerCP":
+                haveCharacter = True
+                CheckPointCount += 1
             if i["pos"][0] < min_x:
                 min_x = i["pos"][0]
             if i["pos"][1] < min_y:
@@ -326,6 +332,8 @@ class ToolBar:
                 index = Constant.CHECKPOINT
             elif(i["type"] == "boxSolve"):
                 index = Constant.BOXSOLVE
+            elif(i["type"] == "playerCP"):
+                index = Constant.PLAYER + Constant.CHECKPOINT
             map[i["pos"][0] - min_x][i["pos"][1] - min_y] = index
         return map
                 
@@ -397,8 +405,10 @@ toolBar = ToolBar()
 
 def setIndexMap(index, isEdit = False): 
     global indexMap
-    if(index < len(readFile("map.json"))): indexMap = index
-    else: index = 0
+    mapLen = len(readFile("map.json"))
+    if(index >= 0 and index < mapLen): indexMap = index
+    elif(index >= mapLen): indexMap = 0
+    else: indexMap = mapLen - 1
     if(isEdit): setRunStep("createMap")
     else: setRunStep("game")
     
@@ -426,6 +436,7 @@ def initGame():
     totalGoat = 0
     finishGame = False
     solution = []
+    player = None
     map = readFile("map.json")[indexMap]
 
     for i in range(len(map)):
@@ -433,6 +444,9 @@ def initGame():
             if(map[i][j] == Constant.PLAYER):
                 player = Player.Player(i, j, Constant.BLOCK_SIZE, Image["Player"])
             if(map[i][j] == Constant.CHECKPOINT):
+                totalCheckPoint += 1
+            if(map[i][j] == Constant.PLAYER + Constant.CHECKPOINT):
+                player = Player.Player(i, j, Constant.BLOCK_SIZE, Image["Player"])
                 totalCheckPoint += 1
             if(map[i][j] == Constant.FLOOR):
                 if(i == 0 or i == len(map) - 1 or j == 0 or j == len(map[0]) - 1):
@@ -443,7 +457,7 @@ def initGame():
     Solve.initDeadlocks(map)
 
     # offset = (contain.SCREEN_WIDTH/2 - player.pos[0]*contain.BLOCK_SIZE - contain.BLOCK_SIZE/2, contain.SCREEN_HEIGHT/2 - player.pos[1]*contain.BLOCK_SIZE - contain.BLOCK_SIZE/2)
-    offset = (Constant.SCREEN_WIDTH - len(map[0])*Constant.BLOCK_SIZE)//2, (Constant.SCREEN_HEIGHT - len(map)*Constant.BLOCK_SIZE)//2
+    offset = (Constant.SCREEN_WIDTH - len(map)*Constant.BLOCK_SIZE)//2, (Constant.SCREEN_HEIGHT - len(map[0])*Constant.BLOCK_SIZE)//2
         
 def findFloor(pos,map):
     up = (pos[0] - 1, pos[1])
@@ -474,10 +488,11 @@ def initChooseMap(isEdit = False):
     limitRow = (Constant.SCREEN_HEIGHT - 100)//(buttonHeight + gap)
    
     mapList = readFile("map.json")
+  
     scrollXRange = (0, max(0, (len(mapList) - 1)//limitRow)*(buttonWidth + gap) - Constant.SCREEN_WIDTH + buttonWidth + 2 * gap)
 
     if(isEdit):
-        listChooseMap.append(Interact.Button("Create New Map", (Constant.SCREEN_WIDTH - 200)/2, 10, 200, buttonHeight, 2, (255, 250, 221), (255, 204, 112), (0, 0, 0), lambda: setRunStep("createMap")))
+        listChooseMap.append(Interact.Button("Create New Map", (Constant.SCREEN_WIDTH - 200)/2, 10, 200, buttonHeight, 2, (255, 250, 221), (255, 204, 112), (0, 0, 0), lambda: setRunStep("createMap"), True))
 
     for i in range(len(mapList)):
         x = gap + (i//limitRow)*(buttonWidth + gap) 
@@ -523,7 +538,7 @@ def chooseMap():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 Button["Menu"].checkClick(event.pos)
                 for button in listChooseMap:
-                    button.checkClick(event.pos)
+                    button.checkClick(event.pos, offsetScroll)
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:
                 if(offsetScroll[0] < -scrollXRange[0]):
@@ -590,7 +605,12 @@ def mainGame():
         # bắt sự kiện bàn phím
         if event.type == pygame.KEYDOWN and Interact.notification == None and not finishGame and not player.isAutoMove:
             # xử lí di chuyển theo sự kiện bàn phím của player
-            player.handleMoveKey(event.key, map)  
+            player.handleMoveKey(event.key, map) 
+            
+            if(event.key == pygame.K_n):
+                setIndexMap(indexMap+1)
+            if(event.key == pygame.K_p):
+                setIndexMap(indexMap-1)
 
     # nếu player đang di chuyển tự động thì xử lí di chuyển tự động
     if(player.isAutoMove):
@@ -624,6 +644,10 @@ def mainGame():
     # hiển thị số bước di chuyển
     moveCount = pygame.font.SysFont(Constant.FONT_FAMILY, 20).render("Move step: " + str(player.moveCount),True,(255, 255, 255))
     screen.blit(moveCount, ((Constant.SCREEN_WIDTH - moveCount.get_width())/2, 10))
+
+    if(indexMap != None):
+        iMap = pygame.font.SysFont(Constant.FONT_FAMILY, 20).render("Map: " + str(indexMap + 1),True,(255, 255, 255))
+        screen.blit(iMap, (10, Constant.SCREEN_HEIGHT - 30))
 
     # kiểm tra xem game đã kết thúc chưa
     if(not finishGame and checkWin(map)):

@@ -80,13 +80,14 @@ class Comfirm:
             self.closeButton.draw(screen)
 
 class Button:
-    def __init__(self,text,x,y,width,height,border,colorBackground,colorBorder,colorText,action):
+    def __init__(self,text,x,y,width,height,border,colorBackground,colorBorder,colorText,action, fixed = False):
         self.rect = Rect(x,y,width,height)
         self.border = border
         self.colorBackground = colorBackground
         self.colorBorder = colorBorder
         self.colorText = colorText
         self.action = action
+        self.fixed = fixed
         self.updateText(text)
 
     def updateText(self,text):
@@ -98,21 +99,25 @@ class Button:
         self.rect = Rect(x,y,width,height)
     
     def draw(self,screen, offset = (0,0)):
+        if(self.fixed): offset = (0,0)
         draw.rect(screen,self.colorBackground,(self.rect.x + offset[0], self.rect.y + offset[1], self.rect.width, self.rect.height) ,int(min(self.rect.height,self.rect.width)/2),min(self.rect.height,self.rect.width)//8)
         draw.rect(screen,self.colorBorder,(self.rect.x + offset[0], self.rect.y + offset[1], self.rect.width, self.rect.height),self.border,min(self.rect.height,self.rect.width)//8)
         screen.blit(self.txt_surface,(self.rect.x + (self.rect.width - self.textRect.width)//2 + offset[0], self.rect.y + (self.rect.height - self.textRect.height)//2 + offset[1]))
     
-    def checkClick(self,mousePos):
-        if(self.rect.collidepoint(mousePos)):
+    def checkClick(self,mousePos, offset = (0,0)):
+        if(self.fixed): offset = (0,0)
+        newRect = Rect(self.rect.x + offset[0], self.rect.y + offset[1], self.rect.width, self.rect.height)
+        if(newRect.collidepoint(mousePos)):
             self.action()
 
 class Button2:
-    def __init__(self,text, x, y, width, height, border, colorText, imagePath, action):
+    def __init__(self,text, x, y, width, height, border, colorText, imagePath, action, fixed = False):
         self.rect = Rect(x,y,width,height)
         self.colorText = colorText
         self.action = action
         self.image = getImage(imagePath, width, height)
         self.border = border
+        self.fixed = fixed
         if(text != None):
             self.updateText(text)
         else:
@@ -127,6 +132,7 @@ class Button2:
         self.rect = Rect(x,y,width,height)
     
     def draw(self,screen, offset = (0,0)):
+        if(self.fixed): offset = (0,0)
         screen.blit(self.image,(self.rect.x + offset[0],self.rect.y + offset[1]))
         if(self.text!=None):
             if(self.border > 0):
@@ -136,8 +142,10 @@ class Button2:
                 screen.blit(self.txt_surface_border,(self.rect.x + (self.rect.width - self.txt_surface_border.get_width())//2 + offset[0], self.rect.y + (self.rect.height - self.txt_surface_border.get_height())//2 + offset[1] + self.border))
             screen.blit(self.txt_surface,(self.rect.x + (self.rect.width - self.txt_surface.get_width())//2 + offset[0], self.rect.y + (self.rect.height - self.txt_surface.get_height())//2 + offset[1]))
 
-    def checkClick(self,mousePos):
-        if(self.rect.collidepoint(mousePos)):
+    def checkClick(self,mousePos, offset = (0,0)):
+        if(self.fixed): offset = (0,0)
+        newRect = Rect(self.rect.x + offset[0], self.rect.y + offset[1], self.rect.width, self.rect.height)
+        if(newRect.collidepoint(mousePos)):
             self.action()
 
 def createComfirm(width, height, title, message, backgroundColor, borderColor, leftAction, rightAction, closeAction = None, titleLeft = "No", titleRight = "Yes"):
