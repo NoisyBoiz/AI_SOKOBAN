@@ -90,7 +90,8 @@ def initDeadlocks(map):
             deadlocks.add(path)
 
 
-def findSolution():
+def findSolution(map):
+    initDeadlocks(map)
     # tạo queue để lưu trạng thái của player và box
     queue = Queue()
     queue.put((player, tuple(listBox), []))

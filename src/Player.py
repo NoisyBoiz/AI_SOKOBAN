@@ -12,7 +12,7 @@ class Player:
         self.animation_index = 0
 
         self.isAutoMove = False
-        self.autoMoveDelay = 2
+        self.autoMoveDelay = 10
         self.autoMoveIndex = 0
         self.moveCount = 0
 
