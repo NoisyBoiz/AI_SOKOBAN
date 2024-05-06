@@ -1,6 +1,9 @@
+import os
+import psutil
 import Constant
 from queue import Queue
-    
+import time
+
 directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
 player = None
@@ -8,6 +11,7 @@ listBox = None
 listWall = None
 listCheckPoint = None
 deadlocks = None
+itemMemory = psutil.Process(os.getpid()).memory_info().rss/(1024*1024)
 
 def initDeadlocks(map):
     global player, listBox, listWall, listCheckPoint, deadlocks
@@ -91,6 +95,8 @@ def initDeadlocks(map):
 
 
 def findSolution(map):
+    startTime = time.time()
+
     initDeadlocks(map)
     # tạo queue để lưu trạng thái của player và box
     queue = Queue()
@@ -107,7 +113,9 @@ def findSolution(map):
         # kiểm tra xem trạng thái hiện tại có phải là trạng thái win không
         if is_win(listCheckPoint, set(cur[1])):    
             # nếu là trạng thái win thì trả về hướng di chuyển để đến trạng thái win
-            return cur[2]
+            timeTook = time.time() - startTime
+            memo_info = psutil.Process(os.getpid()).memory_info().rss/(1024*1024) - itemMemory
+            return cur[2], timeTook, memo_info
         
         # kiểm tra xem trạng thái hiện tại đã được duyệt chưa nếu rồi thì bỏ qua và duyệt trạng thái tiếp theo
         if (cur[0], cur[1]) in visited: continue

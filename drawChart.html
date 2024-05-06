@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f1f1f1;
+        }
+        .chart-container {
+            width: 90vw;
+            height: 90vh;
+        }
+    </style>
+</head>
+    <body>
+        <div class="chart-container">
+            <canvas id="myChart"></canvas>
+        </div>
+        <div id="table">
+
+        </div>
+      
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        
+        <script>
+
+            $.getJSON('src/history.json', function(data) {
+                let labels = [];
+                let time = [];
+                let memo = [];
+                data.forEach(element => {
+                    if(element.memo_info <=0 || element.timeTook <=0){
+                        console.log(element.indexMap+1);
+                    }
+                    labels.push(element.indexMap+1);
+                    time.push(element.timeTook);
+                    memo.push(element.memo_info);
+                });
+
+                const ctx = document.getElementById('myChart');
+        
+                new Chart(ctx, {
+                type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Time',
+                            data: time,
+                            borderWidth: 1
+                        }, 
+                        {
+                            label: 'Memory',
+                            data: memo,
+                            borderWidth: 1
+                        }
+                    ]
+                    },
+                    options: {
+                        scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                        }
+                    }
+                    });
+                });
+
+        </script>
+    <script>
+        
+    </script>
+</body>
+</html>

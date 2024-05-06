@@ -22,6 +22,8 @@ listChooseMap = []
 indexMap = 0
 runStep = "menu"
 
+autoHistory = False
+
 Image = {
     "Wall": getImage("Wall.png", Constant.BLOCK_SIZE, Constant.BLOCK_SIZE),
     "Box": getImage("Box.png", Constant.BLOCK_SIZE, Constant.BLOCK_SIZE),
@@ -431,11 +433,13 @@ def exitGame():
     running = False
 
 def initGame():
-    global map, offset, totalCheckPoint, totalGoat, player, finishGame, solution
+    global map, offset, totalCheckPoint, totalGoat, player, finishGame, solution, timeTook, memo_info
     totalCheckPoint = 0
     totalGoat = 0
     finishGame = False
     solution = []
+    timeTook = None
+    memo_info = None
     player = None
     map = readFile("map.json")[indexMap]
 
@@ -578,9 +582,22 @@ def checkWin(map):
                 return False
     return True
 
+def saveHistory(indexMap, timeTook, memo_info):
+    data = readFile("history.json")
+    for i in data:
+        if i["indexMap"] == indexMap:
+            i["timeTook"] = timeTook
+            i["memo_info"] = memo_info
+            saveFile("history.json",data)
+            return
+    data.append({"indexMap": indexMap, "timeTook": timeTook, "memo_info": memo_info})
+    saveFile("history.json",data)
+
 def autoPlay():
-    global solution
-    solution = Solve.findSolution(map)
+    global solution, timeTook, memo_info
+    solution, timeTook, memo_info = Solve.findSolution(map)
+    timeTook = round(timeTook, 6)
+    saveHistory(indexMap, timeTook, memo_info)
     player.isAutoMove = True
 
 solution = None
@@ -646,8 +663,13 @@ def mainGame():
 
     if(indexMap != None):
         iMap = pygame.font.SysFont(Constant.FONT_FAMILY, 20).render("Map: " + str(indexMap + 1),True,(255, 255, 255))
-        screen.blit(iMap, (10, Constant.SCREEN_HEIGHT - 30))
-
+        screen.blit(iMap, (Constant.SCREEN_WIDTH - iMap.get_width() - 10, Constant.SCREEN_HEIGHT - 30))
+    if(timeTook != None):
+        time = pygame.font.SysFont("Arial", 20, bold = True).render("Time: " + str(timeTook) + " s",True,(255, 255, 255))
+        screen.blit(time, (10, Constant.SCREEN_HEIGHT - 30))
+    if(memo_info != None):
+        memo = pygame.font.SysFont("Arial", 20, bold = True).render("Memo: " + str(memo_info) + " MB",True,(255, 255, 255))
+        screen.blit(memo, (10, Constant.SCREEN_HEIGHT - 60))
     # kiểm tra xem game đã kết thúc chưa
     if(not finishGame and checkWin(map)):
         finishGame = True
